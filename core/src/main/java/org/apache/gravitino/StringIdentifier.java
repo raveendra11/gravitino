@@ -168,7 +168,8 @@ public class StringIdentifier {
       return String.format(STRING_COMMENT_FORMAT, "", STRING_COMMENT, stringId.toString());
     }
 
-    return String.format(STRING_COMMENT_FORMAT, comment + " ", STRING_COMMENT, stringId.toString());
+    return String.format(
+        STRING_COMMENT_FORMAT, comment.trim() + " ", STRING_COMMENT, stringId.toString());
   }
 
   public static StringIdentifier fromComment(String comment) {
@@ -176,12 +177,30 @@ public class StringIdentifier {
       return null;
     }
 
-    int index = comment.lastIndexOf('(');
-    if (index == -1) {
+    String pattern = "(" + STRING_COMMENT;
+    int startIndex = comment.indexOf(pattern);
+    if (startIndex == -1) {
       return null;
     }
 
-    String idString = comment.substring(index + STRING_COMMENT.length() + 1, comment.length() - 1);
+    String commentSubstring = comment.substring(startIndex);
+
+    int left = 0;
+    int right = commentSubstring.indexOf(')', pattern.length());
+    if (right == -1) {
+      return null;
+    }
+
+    String innerComment = commentSubstring.substring(left + 1, right);
+    if (!innerComment.startsWith(STRING_COMMENT)) {
+      return null;
+    }
+
+    String idString = innerComment.substring(STRING_COMMENT.length());
+    if (idString.isEmpty()) {
+      return null;
+    }
+
     return fromString(idString);
   }
 
@@ -201,7 +220,7 @@ public class StringIdentifier {
       }
 
       if (indexOf != -1) {
-        return comment.substring(0, indexOf);
+        return comment.substring(0, indexOf).trim();
       }
     }
     return comment;

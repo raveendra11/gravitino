@@ -32,8 +32,14 @@ public interface ModelVersionMetaMapper {
 
   @InsertProvider(
       type = ModelVersionMetaSQLProviderFactory.class,
-      method = "insertModelVersionMeta")
-  void insertModelVersionMeta(@Param("modelVersionMeta") ModelVersionPO modelVersionPO);
+      method = "insertModelVersionMetas")
+  void insertModelVersionMetas(@Param("modelVersionMetas") List<ModelVersionPO> modelVersionPOs);
+
+  @InsertProvider(
+      type = ModelVersionMetaSQLProviderFactory.class,
+      method = "insertModelVersionMetasWithVersionNumber")
+  void insertModelVersionMetasWithVersionNumber(
+      @Param("modelVersionMetas") List<ModelVersionPO> modelVersionPOs);
 
   @SelectProvider(
       type = ModelVersionMetaSQLProviderFactory.class,
@@ -43,13 +49,13 @@ public interface ModelVersionMetaMapper {
   @SelectProvider(
       type = ModelVersionMetaSQLProviderFactory.class,
       method = "selectModelVersionMeta")
-  ModelVersionPO selectModelVersionMeta(
+  List<ModelVersionPO> selectModelVersionMeta(
       @Param("modelId") Long modelId, @Param("modelVersion") Integer modelVersion);
 
   @SelectProvider(
       type = ModelVersionMetaSQLProviderFactory.class,
       method = "selectModelVersionMetaByAlias")
-  ModelVersionPO selectModelVersionMetaByAlias(
+  List<ModelVersionPO> selectModelVersionMetaByAlias(
       @Param("modelId") Long modelId, @Param("alias") String alias);
 
   @UpdateProvider(

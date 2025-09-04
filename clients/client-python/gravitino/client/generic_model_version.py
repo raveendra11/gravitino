@@ -37,8 +37,8 @@ class GenericModelVersion(ModelVersion):
     def aliases(self) -> List[str]:
         return self._model_version_dto.aliases()
 
-    def uri(self) -> str:
-        return self._model_version_dto.uri()
+    def uris(self) -> Dict[str, str]:
+        return self._model_version_dto.uris()
 
     def properties(self) -> Dict[str, str]:
         return self._model_version_dto.properties()

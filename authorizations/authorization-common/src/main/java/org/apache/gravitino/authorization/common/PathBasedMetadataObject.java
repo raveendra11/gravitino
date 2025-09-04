@@ -155,7 +155,8 @@ public class PathBasedMetadataObject implements AuthorizationMetadataObject {
 
     for (String name : names) {
       Preconditions.checkArgument(
-          name != null, "Cannot create a path based metadata object with null name");
+          name != null && !name.isEmpty(),
+          "Cannot create a path based metadata object with null name");
     }
   }
 
@@ -173,12 +174,13 @@ public class PathBasedMetadataObject implements AuthorizationMetadataObject {
     return Objects.equals(name, that.name)
         && Objects.equals(parent, that.parent)
         && Objects.equals(path, that.path)
-        && Objects.equals(type, that.type);
+        && Objects.equals(type, that.type)
+        && recursive == that.recursive;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, parent, path, type);
+    return Objects.hash(name, parent, path, type, recursive);
   }
 
   @Override
@@ -190,6 +192,8 @@ public class PathBasedMetadataObject implements AuthorizationMetadataObject {
         + strPath
         + "], [type="
         + type
+        + "], [recursive="
+        + recursive
         + "]";
   }
 }

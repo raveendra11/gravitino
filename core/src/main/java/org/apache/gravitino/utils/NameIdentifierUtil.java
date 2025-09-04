@@ -20,8 +20,6 @@ package org.apache.gravitino.utils;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.errorprone.annotations.FormatMethod;
-import com.google.errorprone.annotations.FormatString;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +31,6 @@ import org.apache.gravitino.NameIdentifier;
 import org.apache.gravitino.Namespace;
 import org.apache.gravitino.authorization.AuthorizationUtils;
 import org.apache.gravitino.exceptions.IllegalNameIdentifierException;
-import org.apache.gravitino.exceptions.IllegalNamespaceException;
 
 /**
  * A name identifier is a sequence of names separated by dots. It's used to identify a metalake, a
@@ -102,6 +99,17 @@ public class NameIdentifierUtil {
    */
   public static NameIdentifier ofTag(String metalake, String tagName) {
     return NameIdentifier.of(NamespaceUtil.ofTag(metalake), tagName);
+  }
+
+  /**
+   * Create the policy {@link NameIdentifier} with the given metalake and policy name.
+   *
+   * @param metalake The metalake name
+   * @param policyName The policy name
+   * @return the created policy {@link NameIdentifier}
+   */
+  public static NameIdentifier ofPolicy(String metalake, String policyName) {
+    return NameIdentifier.of(NamespaceUtil.ofPolicy(metalake), policyName);
   }
 
   /**
@@ -272,6 +280,28 @@ public class NameIdentifierUtil {
   }
 
   /**
+   * Create the job template {@link NameIdentifier} with the given metalake and job template name.
+   *
+   * @param metalake The metalake name
+   * @param jobTemplateName The job template name
+   * @return The created job template {@link NameIdentifier}
+   */
+  public static NameIdentifier ofJobTemplate(String metalake, String jobTemplateName) {
+    return NameIdentifier.of(NamespaceUtil.ofJobTemplate(metalake), jobTemplateName);
+  }
+
+  /**
+   * Create the job {@link NameIdentifier} with the given metalake and job name.
+   *
+   * @param metalake The metalake name
+   * @param jobName The job name
+   * @return The created job {@link NameIdentifier}
+   */
+  public static NameIdentifier ofJob(String metalake, String jobName) {
+    return NameIdentifier.of(NamespaceUtil.ofJob(metalake), jobName);
+  }
+
+  /**
    * Try to get the catalog {@link NameIdentifier} from the given {@link NameIdentifier}.
    *
    * @param ident The {@link NameIdentifier} to check.
@@ -429,20 +459,6 @@ public class NameIdentifierUtil {
   }
 
   /**
-   * Check the given condition is true. Throw an {@link IllegalNamespaceException} if it's not.
-   *
-   * @param expression The expression to check.
-   * @param message The message to throw.
-   * @param args The arguments to the message.
-   */
-  @FormatMethod
-  public static void check(boolean expression, @FormatString String message, Object... args) {
-    if (!expression) {
-      throw new IllegalNamespaceException(message, args);
-    }
-  }
-
-  /**
    * Convert the given {@link NameIdentifier} and {@link Entity.EntityType} to {@link
    * MetadataObject}.
    *
@@ -530,5 +546,47 @@ public class NameIdentifierUtil {
    */
   public static NameIdentifier ofGroup(String metalake, String groupName) {
     return NameIdentifier.of(NamespaceUtil.ofGroup(metalake), groupName);
+  }
+
+  /**
+   * Create a statistic {@link NameIdentifier} from the given identifier and name. The statistic
+   * belongs to the given identifier. For example, if the identifier is a table identifier, the
+   * statistic will be created for that table.
+   *
+   * @param entityIdent The identifier to use.
+   * @param name The name of the statistic
+   * @return The created statistic of {@link NameIdentifier}
+   */
+  public static NameIdentifier ofStatistic(NameIdentifier entityIdent, String name) {
+    return NameIdentifier.of(Namespace.fromString(entityIdent.toString()), name);
+  }
+
+  /**
+   * Try to get the model {@link NameIdentifier} from the given {@link NameIdentifier}.
+   *
+   * @param ident The {@link NameIdentifier} to check.
+   * @return The model {@link NameIdentifier}
+   * @throws IllegalNameIdentifierException If the given {@link NameIdentifier} does not include
+   *     model name
+   */
+  public static NameIdentifier getModelIdentifier(NameIdentifier ident) {
+    NameIdentifier.check(
+        ident.name() != null && !ident.name().isEmpty(),
+        "The name variable in the NameIdentifier must have value.");
+    Namespace.check(
+        ident.namespace() != null
+            && !ident.namespace().isEmpty()
+            && ident.namespace().length() >= 4,
+        "ModelVersion namespace must be non-null and at least 4 level, the input namespace is %s",
+        ident.namespace());
+
+    List<String> allElems =
+        Stream.concat(Arrays.stream(ident.namespace().levels()), Stream.of(ident.name()))
+            .collect(Collectors.toList());
+    if (allElems.size() < 4) {
+      throw new IllegalNameIdentifierException(
+          "Cannot create a model NameIdentifier less than four elements.");
+    }
+    return NameIdentifier.of(allElems.get(0), allElems.get(1), allElems.get(2), allElems.get(3));
   }
 }

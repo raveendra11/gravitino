@@ -51,11 +51,12 @@ public interface PolicyChange {
   /**
    * Creates a new policy change to update the content of the policy.
    *
+   * @param policyType The type of the policy, used for validation.
    * @param content The new content for the policy.
    * @return The policy change.
    */
-  static PolicyChange updateContent(Policy.Content content) {
-    return new UpdateContent(content);
+  static PolicyChange updateContent(String policyType, PolicyContent content) {
+    return new UpdateContent(policyType, content);
   }
 
   /** A policy change to rename the policy. */
@@ -160,10 +161,21 @@ public interface PolicyChange {
 
   /** A policy change to update the content of the policy. */
   final class UpdateContent implements PolicyChange {
-    private final Policy.Content content;
+    private final String policyType;
+    private final PolicyContent content;
 
-    private UpdateContent(Policy.Content content) {
+    private UpdateContent(String policyType, PolicyContent content) {
+      this.policyType = policyType;
       this.content = content;
+    }
+
+    /**
+     * Get the type of the policy.
+     *
+     * @return Get the type of the policy.
+     */
+    public String getPolicyType() {
+      return policyType;
     }
 
     /**
@@ -171,25 +183,25 @@ public interface PolicyChange {
      *
      * @return The content of the policy change.
      */
-    public Policy.Content getContent() {
+    public PolicyContent getContent() {
       return content;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof UpdateContent)) return false;
       UpdateContent that = (UpdateContent) o;
-      return Objects.equals(content, that.content);
+      return Objects.equals(policyType, that.policyType) && Objects.equals(content, that.content);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(content);
+      return Objects.hash(policyType, content);
     }
 
     @Override
     public String toString() {
-      return "UPDATE CONTENT " + content;
+      return "UPDATE POLICY CONTENT " + "policyType=" + policyType + ", content=" + content;
     }
   }
 }

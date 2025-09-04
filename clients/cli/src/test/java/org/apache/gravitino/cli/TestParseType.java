@@ -100,4 +100,59 @@ public class TestParseType {
     assertThrows(IllegalArgumentException.class, () -> ParseType.toType("varchar(-10)"));
     assertThrows(IllegalArgumentException.class, () -> ParseType.toType("decimal(10,abc)"));
   }
+
+  @Test
+  public void testParseTypeListWithSpaces() {
+    Type type = ParseType.toType("list( integer )");
+    assertThat(type, instanceOf(Types.ListType.class));
+    Type elementType = ((Types.ListType) type).elementType();
+    assertThat(elementType, instanceOf(Types.IntegerType.class));
+  }
+
+  @Test
+  public void testParseTypeMapWithSpaces() {
+    Type type = ParseType.toType("map( string , integer )");
+    assertThat(type, instanceOf(Types.MapType.class));
+    Type keyType = ((Types.MapType) type).keyType();
+    Type valueType = ((Types.MapType) type).valueType();
+    assertThat(keyType, instanceOf(Types.StringType.class));
+    assertThat(valueType, instanceOf(Types.IntegerType.class));
+  }
+
+  @Test
+  public void testParseTypeNestedList() {
+    Type type = ParseType.toType("list(list(integer))");
+    assertThat(type, instanceOf(Types.ListType.class));
+    Type innerList = ((Types.ListType) type).elementType();
+    assertThat(innerList, instanceOf(Types.ListType.class));
+    Type elementType = ((Types.ListType) innerList).elementType();
+    assertThat(elementType, instanceOf(Types.IntegerType.class));
+  }
+
+  @Test
+  public void testParseTypeMapWithNestedValue() {
+    Type type = ParseType.toType("map(string,list(integer))");
+    assertThat(type, instanceOf(Types.MapType.class));
+    Type keyType = ((Types.MapType) type).keyType();
+    Type valueType = ((Types.MapType) type).valueType();
+    assertThat(keyType, instanceOf(Types.StringType.class));
+    assertThat(valueType, instanceOf(Types.ListType.class));
+    Type elementType = ((Types.ListType) valueType).elementType();
+    assertThat(elementType, instanceOf(Types.IntegerType.class));
+  }
+
+  @Test
+  public void testParseTypeDecimalWithSpaces() {
+    Type type = ParseType.toType("decimal(10, 5)");
+    assertThat(type, instanceOf(Types.DecimalType.class));
+    assertEquals(10, ((Types.DecimalType) type).precision());
+    assertEquals(5, ((Types.DecimalType) type).scale());
+  }
+
+  @Test
+  public void testParseTypeVarcharWithSpaces() {
+    Type type = ParseType.toType("varchar( 10 )");
+    assertThat(type, instanceOf(Types.VarCharType.class));
+    assertEquals(10, ((Types.VarCharType) type).length());
+  }
 }

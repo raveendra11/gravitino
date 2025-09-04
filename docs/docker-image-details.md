@@ -20,6 +20,9 @@ docker run --rm -d -p 8090:8090 -p 9001:9001 apache/gravitino:0.7.0-incubating
 Changelog
 
 
+- apache/gravitino:0.9.1
+  - Based on Gravitino 0.9.1, you can know more information from 0.9.1 [release notes](https://github.com/apache/gravitino/releases/tag/v0.9.1).
+
 - apache/gravitino:0.9.0-incubating
   - Based on Gravitino 0.9.0-incubating, you can know more information from 0.9.0-incubating [release notes](https://github.com/apache/gravitino/releases/tag/v0.9.0-incubating).
 
@@ -66,6 +69,10 @@ docker run --rm -d -p 9001:9001 apache/gravitino-iceberg-rest:0.7.0-incubating
 ```
 
 Changelog
+- apache/gravitino-iceberg-rest:0.9.1
+  - Fix the issue that Iceberg REST server fail to start when enabling OAuth.
+  - Add the documents for the StarRocks and Apache Doris using IRC
+
 - apache/gravitino-iceberg-rest:0.9.0-incubating
   - Upgrade Iceberg version from 1.5 to 1.6.
   - Supports s3 path-style-access property.
@@ -90,6 +97,22 @@ Changelog
   - Gravitino Iceberg REST Server with memory catalog backend.
   - Expose ports:
     - `9001` Iceberg REST service
+
+## Apache Gravitino MCP server image
+
+You can deploy the Gravitino MCP server with the Docker image.
+
+Container startup commands
+
+```shell
+docker run --rm -d -p 8000:8000 apache/gravitino-mcp-server:latest --metalake test --transport http --mcp-url http://0.0.0.0:8000/mcp
+```
+
+Changelog
+- apache/gravitino-mcp-server:1.0.0
+  - Supports read operations for `catalog`, `schema`, `table`, `fileset`, `model`, `policy`, `topic`, `statistic`, `job`.
+  - Supports associate&disassociate tag, policy to metadata
+  - Supports submit&cancel jobs.
 
 ## Playground Docker image
 
@@ -116,6 +139,9 @@ Changelog
 
 Changelog
 
+
+- apache/gravitino-playground:trino-435-gravitino-0.9.1
+  - Use Gravitino release 0.9.1 Dockerfile to build the image.
 
 - apache/gravitino-playground:trino-435-gravitino-0.9.0-incubating
   - Use Gravitino release 0.9.0-incubating Dockerfile to build the image.
@@ -399,6 +425,7 @@ Changelog
 - datastrato/gravitino-ci-ranger:0.1.0
   - Docker image `datastrato/gravitino-ci-ranger:0.1.0`
   - Support Apache Ranger 2.4.0
-  - Use environment variable `RANGER_PASSWORD` to set up Apache Ranger admin password, Please notice Apache Ranger Password should be minimum 8 characters with min one alphabet and one numeric.
+  - Use environment variable `RANGER_PASSWORD` to set up Apache Ranger admin password, please 
+    notice Apache Ranger Password should be minimum 8 characters with min one alphabet and one numeric.
   - Expose ports:
     - `6080` Apache Ranger admin port

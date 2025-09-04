@@ -59,7 +59,7 @@ The general structure for running commands with the Gravitino CLI is `gcli.sh en
     --sortorder          display sortorder information
  -t,--tag <arg>          tag name
  -u,--url <arg>          Gravitino URL (default: http://localhost:8090)
-    --uri <arg>          model version artifact
+    --uris <arg>         model version artifact
  -v,--version            Gravitino client version
  -V,--value <arg>        property value
  -x,--index              display index information
@@ -463,7 +463,7 @@ Setting and removing schema properties is not currently supported by the Java AP
 
 ### Table commands
 
-When creating a table the columns are specified in CSV file specifying the name of the column, the datatype, a comment, true or false if the column is nullable, true or false if the column is auto incremented, a default value and a default type. Not all of the columns need to be specifed just the name and datatype columns. If not specified comment default to null, nullability to true and auto increment to false. If only the default value is specified it defaults to the same data type as the column.
+When creating a table the columns are specified in CSV file specifying the name of the column, the datatype, a comment, true or false if the column is nullable, true or false if the column is auto incremented, a default value and a default type. Not all of the columns need to be specified just the name and datatype columns. If not specified comment default to null, nullability to true and auto increment to false. If only the default value is specified it defaults to the same data type as the column.
 
 Example CSV file
 
@@ -971,6 +971,98 @@ gcli.sh <normal command> --simple
 
 ```bash
 gcli.sh <normal command> --simple --login userName
+```
+
+### Model commands
+
+#### Create a model
+
+```bash
+gcli.sh model create --name catalog_model.schema.model
+```
+
+#### List models
+
+```bash
+gcli.sh model list --name catalog_model.schema
+```
+
+#### Display a model's details
+
+```bash
+gcli.sh model details --name catalog_model.schema.model
+```
+
+#### Display a model's audit information
+
+```bash
+gcli.sh model details --name catalog_model.schema.model --audit
+```
+
+#### Delete a model
+
+```bash
+gcli.sh model delete --name catalog_model.schema.model
+```
+
+#### Update a model's comment
+
+```bash
+gcli.sh model update --name catalog_model.schema.model --comment new_comment
+```
+
+#### Rename a model
+
+```bash
+gcli.sh model update --name catalog_model.schema.model --rename new_name
+```
+
+#### Set a model's property
+
+```bash
+gcli.sh model set --name catalog_model.schema.model --property k --value v
+```
+
+#### Remove a model's property
+
+```bash
+gcli.sh model remove --name catalog_model.schema.model --property k
+```
+
+#### Link a model version
+
+```bash
+gcli.sh model update --name catalog_model.schema.model --uris s3=s3://path,hdfs=hdfs://path --alias alias1
+```
+
+#### Update a model version's comment
+
+```bash
+gcli.sh model update --name catalog_model.schema.model --version 0 --comment new_comment
+```
+
+#### Add aliases to a model version
+
+```bash
+gcli.sh model update --name catalog_model.schema.model --version 0 --newalias alias1
+```
+
+#### Remove aliases of a model version
+
+```bash
+gcli.sh model remove --name catalog_model.schema.model --version 0 --removealias alias1
+```
+
+#### Set a model version's property
+
+```bash
+gcli.sh model set --name catalog_model.schema.model --version 0 --property k --value v
+```
+
+#### Remove a model version's property
+
+```bash
+gcli.sh model remove --name catalog_model.schema.model --version 0 --property k
 ```
 
 <img src="https://analytics.apache.org/matomo.php?idsite=62&rec=1&bots=1&action_name=CLI" alt="" />

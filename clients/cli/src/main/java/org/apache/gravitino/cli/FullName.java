@@ -22,13 +22,13 @@ package org.apache.gravitino.cli;
 import org.apache.commons.cli.CommandLine;
 
 /**
- * Extracts different arts of a full name (dot seperated) from the command line input. This includes
- * metalake, catalog, schema, and table names.
+ * Extracts different parts of a full name (dot separated) from the command line input. This
+ * includes metalake, catalog, schema, and table names.
  */
 public class FullName {
   private final CommandLine line;
   private String metalakeEnv;
-  private boolean matalakeSet = false;
+  private boolean metalakeSet = false;
   private boolean hasDisplayedMissingNameInfo = true;
   private boolean hasDisplayedMalformedInfo = true;
 
@@ -70,9 +70,9 @@ public class FullName {
     }
 
     // Cache the metalake environment variable
-    if (metalakeEnv == null && !matalakeSet) {
+    if (metalakeEnv == null && !metalakeSet) {
       metalakeEnv = System.getenv("GRAVITINO_METALAKE");
-      matalakeSet = true;
+      metalakeSet = true;
     }
 
     // Check if the metalake name is set as an environment variable
@@ -206,7 +206,7 @@ public class FullName {
    * Helper method to determine a specific part of the full name exits.
    *
    * @param partNo The part of the name to obtain.
-   * @return True if the part exitsts.
+   * @return True if the part exists.
    */
   public boolean hasNamePart(int partNo) {
     /* Extract the name part from the full name if available. */

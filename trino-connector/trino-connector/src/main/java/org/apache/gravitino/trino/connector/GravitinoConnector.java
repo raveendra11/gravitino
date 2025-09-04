@@ -48,6 +48,13 @@ public class GravitinoConnector implements Connector {
   private final NameIdentifier catalogIdentifier;
   private final CatalogConnectorContext catalogConnectorContext;
 
+  /**
+   * Constructs a new GravitinoConnector with the specified catalog identifier and catalog connector
+   * context.
+   *
+   * @param catalogIdentifier the catalog identifier
+   * @param catalogConnectorContext the catalog connector context
+   */
   public GravitinoConnector(
       NameIdentifier catalogIdentifier, CatalogConnectorContext catalogConnectorContext) {
     this.catalogIdentifier = catalogIdentifier;
@@ -58,10 +65,11 @@ public class GravitinoConnector implements Connector {
   public ConnectorTransactionHandle beginTransaction(
       IsolationLevel isolationLevel, boolean readOnly, boolean autoCommit) {
     Connector internalConnector = catalogConnectorContext.getInternalConnector();
+    Preconditions.checkNotNull(internalConnector, "Internal connector must not be null");
 
     ConnectorTransactionHandle internalTransactionHandler =
         internalConnector.beginTransaction(isolationLevel, readOnly, autoCommit);
-    Preconditions.checkNotNull(internalConnector);
+    Preconditions.checkNotNull(internalTransactionHandler, "Transaction handler must not be null");
 
     return new GravitinoTransactionHandle(internalTransactionHandler);
   }

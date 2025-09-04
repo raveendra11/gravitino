@@ -20,6 +20,7 @@ package org.apache.gravitino.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,12 +42,15 @@ import org.apache.gravitino.dto.responses.BaseResponse;
 import org.apache.gravitino.dto.responses.DropResponse;
 import org.apache.gravitino.dto.responses.EntityListResponse;
 import org.apache.gravitino.dto.responses.ModelResponse;
+import org.apache.gravitino.dto.responses.ModelVersionInfoListResponse;
 import org.apache.gravitino.dto.responses.ModelVersionListResponse;
 import org.apache.gravitino.dto.responses.ModelVersionResponse;
+import org.apache.gravitino.dto.responses.ModelVersionUriResponse;
 import org.apache.gravitino.exceptions.ModelAlreadyExistsException;
 import org.apache.gravitino.exceptions.ModelVersionAliasesAlreadyExistException;
 import org.apache.gravitino.exceptions.NoSuchModelException;
 import org.apache.gravitino.exceptions.NoSuchModelVersionException;
+import org.apache.gravitino.exceptions.NoSuchModelVersionURINameException;
 import org.apache.gravitino.exceptions.NoSuchSchemaException;
 import org.apache.gravitino.model.Model;
 import org.apache.gravitino.model.ModelCatalog;
@@ -162,6 +166,23 @@ class GenericModelCatalog extends BaseSchemaCatalog implements ModelCatalog {
   }
 
   @Override
+  public ModelVersion[] listModelVersionInfos(NameIdentifier ident) throws NoSuchModelException {
+    checkModelNameIdentifier(ident);
+
+    NameIdentifier modelFullIdent = modelFullNameIdentifier(ident);
+    ModelVersionInfoListResponse resp =
+        restClient.get(
+            formatModelVersionRequestPath(modelFullIdent) + "/versions",
+            ImmutableMap.of("details", "true"),
+            ModelVersionInfoListResponse.class,
+            Collections.emptyMap(),
+            ErrorHandlers.modelErrorHandler());
+    resp.validate();
+
+    return resp.getVersions();
+  }
+
+  @Override
   public ModelVersion getModelVersion(NameIdentifier ident, int version)
       throws NoSuchModelVersionException {
     checkModelNameIdentifier(ident);
@@ -201,14 +222,14 @@ class GenericModelCatalog extends BaseSchemaCatalog implements ModelCatalog {
   @Override
   public void linkModelVersion(
       NameIdentifier ident,
-      String uri,
+      Map<String, String> uris,
       String[] aliases,
       String comment,
       Map<String, String> properties)
       throws NoSuchModelException, ModelVersionAliasesAlreadyExistException {
     checkModelNameIdentifier(ident);
 
-    ModelVersionLinkRequest req = new ModelVersionLinkRequest(uri, aliases, comment, properties);
+    ModelVersionLinkRequest req = new ModelVersionLinkRequest(uris, aliases, comment, properties);
     NameIdentifier modelFullIdent = modelFullNameIdentifier(ident);
     BaseResponse resp =
         restClient.post(
@@ -219,6 +240,50 @@ class GenericModelCatalog extends BaseSchemaCatalog implements ModelCatalog {
             ErrorHandlers.modelErrorHandler());
 
     resp.validate();
+  }
+
+  @Override
+  public String getModelVersionUri(NameIdentifier ident, int version, String uriName)
+      throws NoSuchModelVersionException, NoSuchModelVersionURINameException {
+    checkModelNameIdentifier(ident);
+    Preconditions.checkArgument(version >= 0, "Model version must be non-negative");
+
+    NameIdentifier modelFullIdent = modelFullNameIdentifier(ident);
+    Map<String, String> queryParam =
+        uriName == null ? Collections.emptyMap() : ImmutableMap.of("uriName", uriName);
+    ModelVersionUriResponse resp =
+        restClient.get(
+            formatModelVersionRequestPath(modelFullIdent) + "/versions/" + version + "/uri",
+            queryParam,
+            ModelVersionUriResponse.class,
+            Collections.emptyMap(),
+            ErrorHandlers.modelErrorHandler());
+    resp.validate();
+    return resp.getUri();
+  }
+
+  @Override
+  public String getModelVersionUri(NameIdentifier ident, String alias, String uriName)
+      throws NoSuchModelVersionException, NoSuchModelVersionURINameException {
+    checkModelNameIdentifier(ident);
+    Preconditions.checkArgument(StringUtils.isNotBlank(alias), "Model alias must be non-empty");
+
+    NameIdentifier modelFullIdent = modelFullNameIdentifier(ident);
+    Map<String, String> queryParam =
+        uriName == null ? Collections.emptyMap() : ImmutableMap.of("uriName", uriName);
+    ModelVersionUriResponse resp =
+        restClient.get(
+            formatModelVersionRequestPath(modelFullIdent)
+                + "/aliases/"
+                + RESTUtils.encodeString(alias)
+                + "/uri",
+            queryParam,
+            ModelVersionUriResponse.class,
+            Collections.emptyMap(),
+            ErrorHandlers.modelErrorHandler());
+
+    resp.validate();
+    return resp.getUri();
   }
 
   @Override
@@ -329,7 +394,9 @@ class GenericModelCatalog extends BaseSchemaCatalog implements ModelCatalog {
     NameIdentifier modelFullIdent = modelFullNameIdentifier(ident);
     ModelVersionResponse resp =
         restClient.put(
-            formatModelVersionRequestPath(modelFullIdent) + "/aliases/" + alias,
+            formatModelVersionRequestPath(modelFullIdent)
+                + "/aliases/"
+                + RESTUtils.encodeString(alias),
             req,
             ModelVersionResponse.class,
             Collections.emptyMap(),
@@ -347,7 +414,8 @@ class GenericModelCatalog extends BaseSchemaCatalog implements ModelCatalog {
   private void checkModelNamespace(Namespace namespace) {
     Namespace.check(
         namespace != null && namespace.length() == 1,
-        "Model namespace must be non-null and only have 1 level, the input namespace is ");
+        "Model namespace must be non-null and only have 1 level, the input namespace is %s",
+        namespace);
   }
 
   private void checkModelNameIdentifier(NameIdentifier ident) {

@@ -49,7 +49,7 @@ def s3_is_configured():
 @unittest.skipUnless(s3_is_configured(), "S3 is not configured.")
 class TestGvfsWithS3(TestGvfsWithHDFS):
     # Before running this test, please set the make sure aws-bundle-x.jar has been
-    # copy to the $GRAVITINO_HOME/catalogs/hadoop/libs/ directory
+    # copy to the $GRAVITINO_HOME/catalogs/fileset/libs/ directory
     s3_access_key = os.environ.get("S3_ACCESS_KEY_ID")
     s3_secret_key = os.environ.get("S3_SECRET_ACCESS_KEY")
     s3_endpoint = os.environ.get("S3_ENDPOINT")
@@ -71,7 +71,9 @@ class TestGvfsWithS3(TestGvfsWithHDFS):
     def setUpClass(cls):
         cls._get_gravitino_home()
 
-        cls.hadoop_conf_path = f"{cls.gravitino_home}/catalogs/hadoop/conf/hadoop.conf"
+        cls.hadoop_conf_path = (
+            f"{cls.gravitino_home}/catalogs/fileset/conf/fileset.conf"
+        )
         # restart the server
         cls.restart_server()
         # create entity
@@ -112,7 +114,9 @@ class TestGvfsWithS3(TestGvfsWithHDFS):
             name=cls.metalake_name, comment="", properties={}
         )
         cls.gravitino_client = GravitinoClient(
-            uri="http://localhost:8090", metalake_name=cls.metalake_name
+            uri="http://localhost:8090",
+            metalake_name=cls.metalake_name,
+            client_config={"gravitino_client_request_timeout": 180},
         )
 
         cls.config = {}
@@ -145,6 +149,32 @@ class TestGvfsWithS3(TestGvfsWithHDFS):
             comment=cls.fileset_comment,
             storage_location=cls.fileset_storage_location,
             properties=cls.fileset_properties,
+        )
+
+        cls.multiple_locations_fileset_storage_location: str = (
+            f"s3a://{cls.bucket_name}/{cls.catalog_name}/{cls.schema_name}/"
+            f"{cls.multiple_locations_fileset_name}"
+        )
+        cls.multiple_locations_fileset_storage_location1: str = (
+            f"s3a://{cls.bucket_name}/{cls.catalog_name}/{cls.schema_name}/"
+            f"{cls.multiple_locations_fileset_name}_1"
+        )
+        cls.multiple_locations_fileset_gvfs_location = (
+            f"gvfs://fileset/{cls.catalog_name}/{cls.schema_name}/"
+            f"{cls.multiple_locations_fileset_name}"
+        )
+        catalog.as_fileset_catalog().create_multiple_location_fileset(
+            ident=cls.multiple_locations_fileset_ident,
+            fileset_type=Fileset.Type.MANAGED,
+            comment=cls.fileset_comment,
+            storage_locations={
+                "default": cls.multiple_locations_fileset_storage_location,
+                "location1": cls.multiple_locations_fileset_storage_location1,
+            },
+            properties={
+                Fileset.PROPERTY_DEFAULT_LOCATION_NAME: "default",
+                **cls.fileset_properties,
+            },
         )
 
         cls.fs = S3FileSystem(
@@ -236,6 +266,7 @@ class TestGvfsWithS3(TestGvfsWithHDFS):
 
         fs.rm_file(rmdir_file)
 
+    # pylint: disable=W0212
     def test_mkdir(self):
         mkdir_dir = self.fileset_gvfs_location + "/test_mkdir"
         mkdir_actual_dir = self.fileset_storage_location + "/test_mkdir"
@@ -243,8 +274,14 @@ class TestGvfsWithS3(TestGvfsWithHDFS):
             server_uri="http://localhost:8090",
             metalake_name=self.metalake_name,
             options=self.options,
+            config_kwargs={"s3": {"addressing_style": "virtual"}},
             **self.conf,
         )
+
+        fs.operations._catalog_cache.clear()
+        s3_fs = fs.operations._get_actual_filesystem(mkdir_dir, None)
+        config_kwargs = s3_fs.config_kwargs
+        self.assertEqual("virtual", config_kwargs.get("s3").get("addressing_style"))
 
         # it actually takes no effect.
         self.check_mkdir(mkdir_dir, mkdir_actual_dir, fs)

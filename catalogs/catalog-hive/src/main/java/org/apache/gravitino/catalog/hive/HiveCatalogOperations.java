@@ -150,7 +150,12 @@ public class HiveCatalogOperations implements CatalogOperations, SupportsSchemas
         (key, value) -> {
           if (key.startsWith(CATALOG_BYPASS_PREFIX)) {
             // Trim bypass prefix and pass it to hive conf
-            byPassConfig.put(key.substring(CATALOG_BYPASS_PREFIX.length()), value);
+            String hiveKey = key.substring(CATALOG_BYPASS_PREFIX.length());
+            if (!hiveKey.isEmpty()) {
+              byPassConfig.put(hiveKey, value);
+            } else {
+              LOG.warn("Ignoring invalid configuration key: {}", key);
+            }
           } else if (GRAVITINO_CONFIG_TO_HIVE.containsKey(key)) {
             gravitinoConfig.put(GRAVITINO_CONFIG_TO_HIVE.get(key), value);
           }
@@ -812,6 +817,8 @@ public class HiveCatalogOperations implements CatalogOperations, SupportsSchemas
     } catch (TException | InterruptedException e) {
       throw new RuntimeException(
           "Failed to create Hive table " + tableIdent.name() + " in Hive Metastore", e);
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

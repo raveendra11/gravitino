@@ -26,6 +26,7 @@ import org.apache.gravitino.credential.SupportsCredentials;
 import org.apache.gravitino.file.FilesetCatalog;
 import org.apache.gravitino.messaging.TopicCatalog;
 import org.apache.gravitino.model.ModelCatalog;
+import org.apache.gravitino.policy.SupportsPolicies;
 import org.apache.gravitino.rel.TableCatalog;
 import org.apache.gravitino.tag.SupportsTags;
 
@@ -43,7 +44,7 @@ public interface Catalog extends Auditable {
     RELATIONAL(false),
 
     /** Catalog Type for Fileset System (including HDFS, S3, etc.), like path/to/file */
-    FILESET(false),
+    FILESET(true),
 
     /** Catalog Type for Message Queue, like Kafka://topic */
     MESSAGING(false),
@@ -68,7 +69,7 @@ public interface Catalog extends Auditable {
      * the provider to create the managed catalog. If the catalog type does not support managed
      * catalog, users need to specify the provider when creating the catalog.
      *
-     * <p>Currently, only the model catalog supports managed catalog.
+     * <p>Currently, the model and fileset catalogs support managed catalog.
      *
      * @return Whether the catalog type supports managed catalog. Returns true if the catalog type
      *     supports managed catalog.
@@ -222,6 +223,14 @@ public interface Catalog extends Auditable {
    */
   default SupportsTags supportsTags() throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Catalog does not support tag operations");
+  }
+
+  /**
+   * @return the {@link SupportsPolicies} if the catalog supports policy operations.
+   * @throws UnsupportedOperationException if the catalog does not support policy operations.
+   */
+  default SupportsPolicies supportsPolicies() throws UnsupportedOperationException {
+    throw new UnsupportedOperationException("Catalog does not support policy operations");
   }
 
   /**

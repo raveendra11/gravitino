@@ -524,7 +524,7 @@ public class TestTableFormat {
             + "| column2 | string  | default value       |               | true     | This is a string column |\n"
             + "| column2 | string  | ''                  |               | true     | This is a string column |\n"
             + "| column2 | string  | current_timestamp() |               | true     | This is a string column |\n"
-            + "| column2 | string  | date([b])           |               | true     | This is a string column |\n"
+            + "| column2 | string  | date(b)             |               | true     | This is a string column |\n"
             + "+---------+---------+---------------------+---------------+----------+-------------------------+",
         output);
   }
@@ -909,5 +909,45 @@ public class TestTableFormat {
             + "| topic3 |\n"
             + "+--------+",
         output);
+  }
+
+  @Test
+  void testMultiByteCharacterTableFormat() {
+    CommandContext mockContext = TestCliUtil.getMockContext();
+
+    Column columnA = new Column(mockContext, "이름");
+    Column columnB = new Column(mockContext, "설명");
+
+    columnA.addCell("홍길동").addCell("김철수").addCell("이영희");
+    columnB.addCell("테스트입니다").addCell("설명문구").addCell("멀티바이트");
+
+    TableFormat<String> tableFormat =
+        new TableFormat<String>(mockContext) {
+          @Override
+          public String getOutput(String entity) {
+            return null;
+          }
+        };
+
+    String outputString = tableFormat.getTableFormat(columnA, columnB).trim();
+
+    String eol = System.lineSeparator();
+
+    String expected =
+        "+--------+--------------+"
+            + eol
+            + "|  이름  |     설명     |"
+            + eol
+            + "+--------+--------------+"
+            + eol
+            + "| 홍길동 | 테스트입니다 |"
+            + eol
+            + "| 김철수 | 설명문구     |"
+            + eol
+            + "| 이영희 | 멀티바이트   |"
+            + eol
+            + "+--------+--------------+";
+
+    Assertions.assertEquals(expected.trim(), outputString.trim());
   }
 }

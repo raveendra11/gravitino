@@ -18,13 +18,12 @@
  */
 package org.apache.gravitino.policy;
 
-import java.util.Map;
+import com.google.common.base.Preconditions;
 import java.util.Optional;
-import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.gravitino.Auditable;
 import org.apache.gravitino.MetadataObject;
 import org.apache.gravitino.annotation.Evolving;
-import org.apache.gravitino.exceptions.IllegalPolicyException;
 
 /**
  * The interface of the policy. The policy is a set of rules that can be associated with a metadata
@@ -32,6 +31,75 @@ import org.apache.gravitino.exceptions.IllegalPolicyException;
  */
 @Evolving
 public interface Policy extends Auditable {
+
+  /**
+   * The prefix for built-in policy types. All built-in policy types should start with this prefix.
+   */
+  String BUILT_IN_TYPE_PREFIX = "system_";
+
+  /** The built-in policy types. Predefined policy types that are provided by the system. */
+  enum BuiltInType {
+    // todo: add built-in policies, such as:
+    //    DATA_COMPACTION(BUILT_IN_TYPE_PREFIX + "data_compaction",
+    //    PolicyContent.DataCompactionContent.class)
+
+    /**
+     * Custom policy type. "custom" is a fixed string that indicates the policy is a non-built-in
+     * type.
+     */
+    CUSTOM("custom", PolicyContents.CustomContent.class);
+
+    private final String policyType;
+    private final Class<? extends PolicyContent> contentClass;
+
+    BuiltInType(String policyType, Class<? extends PolicyContent> contentClass) {
+      this.policyType = policyType;
+      this.contentClass = contentClass;
+    }
+
+    /**
+     * Get the built-in policy type from the policy type string.
+     *
+     * @param policyType the policy type string
+     * @return the built-in policy type if it matches, otherwise returns CUSTOM type
+     */
+    public static BuiltInType fromPolicyType(String policyType) {
+      Preconditions.checkArgument(StringUtils.isNotBlank(policyType), "policyType cannot be blank");
+      for (BuiltInType type : BuiltInType.values()) {
+        if (type.policyType.equalsIgnoreCase(policyType)) {
+          return type;
+        }
+      }
+
+      if (policyType.startsWith(BUILT_IN_TYPE_PREFIX)) {
+        throw new IllegalArgumentException(
+            String.format("Unknown built-in policy type: %s", policyType));
+      }
+
+      throw new IllegalArgumentException(
+          String.format(
+              "Unknown policy type: %s, it should start with '%s' or be 'custom'",
+              policyType, BUILT_IN_TYPE_PREFIX));
+    }
+
+    /**
+     * Get the policy type string.
+     *
+     * @return the policy type string
+     */
+    public String policyType() {
+      return policyType;
+    }
+
+    /**
+     * Get the content class of the policy.
+     *
+     * @return the content class of the policy
+     */
+    public Class<? extends PolicyContent> contentClass() {
+      return contentClass;
+    }
+  }
 
   /**
    * Get the name of the policy.
@@ -45,7 +113,7 @@ public interface Policy extends Auditable {
    *
    * @return The type of the policy.
    */
-  String type();
+  String policyType();
 
   /**
    * Get the comment of the policy.
@@ -62,36 +130,11 @@ public interface Policy extends Auditable {
   boolean enabled();
 
   /**
-   * Whether the policy is exclusive or not. If the policy is exclusive, only one of the same type
-   * policy can be associated with the same object. If the policy is not exclusive, multiple
-   * policies of the same type can be associated with the same object.
-   *
-   * @return True if the policy is exclusive, false otherwise.
-   */
-  boolean exclusive();
-
-  /**
-   * Whether the policy is inheritable or not. If the policy is inheritable, it can be inherited by
-   * child objects. If the policy is not inheritable, it can only be associated with the metadata
-   * object itself.
-   *
-   * @return True if the policy is inheritable, false otherwise.
-   */
-  boolean inheritable();
-
-  /**
-   * Get the set of the metadata object types that the policy can be associated with.
-   *
-   * @return The set of the metadata object types that the policy can be associated with.
-   */
-  Set<MetadataObject.Type> supportedObjectTypes();
-
-  /**
    * Get the content of the policy.
    *
    * @return The content of the policy.
    */
-  Content content();
+  PolicyContent content();
 
   /**
    * Check if the policy is inherited from a parent object or not.
@@ -105,25 +148,9 @@ public interface Policy extends Auditable {
    */
   Optional<Boolean> inherited();
 
-  /**
-   * Validate the policy. This method should be called when the policy is created or updated. It
-   * will check if the policy is valid or not. If the policy is not valid, it will throw an
-   * IllegalPolicyException.
-   *
-   * @throws IllegalPolicyException if the policy is not valid.
-   */
-  void validate() throws IllegalPolicyException;
-
   /** @return The associated objects of the policy. */
   default AssociatedObjects associatedObjects() {
     throw new UnsupportedOperationException("The associatedObjects method is not supported.");
-  }
-
-  /** The interface of the content of the policy. */
-  interface Content {
-
-    /** @return The additional properties of the policy. */
-    Map<String, String> properties();
   }
 
   /** The interface of the associated objects of the policy. */

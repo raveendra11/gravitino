@@ -47,6 +47,7 @@ dependencies {
   implementation(libs.bundles.iceberg)
   implementation(libs.bundles.jetty)
   implementation(libs.bundles.jersey)
+  implementation(libs.bundles.jwt)
   implementation(libs.bundles.log4j)
   implementation(libs.bundles.metrics)
   implementation(libs.bundles.prometheus)
@@ -64,7 +65,7 @@ dependencies {
 
   // Iceberg doesn't provide Aliyun bundle jar, use Gravitino Aliyun bundle to provide OSS packages
   testImplementation(project(":bundles:aliyun-bundle"))
-  testImplementation(project(":bundles:aws"))
+  testImplementation(project(":bundles:aws", configuration = "shadow"))
   testImplementation(project(":bundles:gcp", configuration = "shadow"))
   testImplementation(project(":bundles:azure", configuration = "shadow"))
   testImplementation(project(":integration-test-common", "testArtifacts"))
@@ -81,11 +82,7 @@ dependencies {
 
   testImplementation(libs.iceberg.aws.bundle)
   testImplementation(libs.iceberg.gcp.bundle)
-  // Prevent netty conflict
-  testImplementation(libs.reactor.netty.http)
-  testImplementation(libs.reactor.netty.core)
   testImplementation(libs.iceberg.azure.bundle) {
-    exclude("io.netty")
     exclude("com.google.guava", "guava")
   }
   testImplementation(libs.jersey.test.framework.core) {

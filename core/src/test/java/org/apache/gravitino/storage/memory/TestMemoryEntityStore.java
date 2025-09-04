@@ -31,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.gravitino.Config;
 import org.apache.gravitino.Entity;
 import org.apache.gravitino.Entity.EntityType;
@@ -154,17 +155,45 @@ public class TestMemoryEntityStore {
     @Override
     public <R, E extends Exception> R executeInTransaction(Executable<R, E> executable)
         throws E, IOException {
+      lock.lock();
+      Map<NameIdentifier, Entity> snapshot = createSnapshot();
       try {
-        lock.lock();
         return executable.execute();
+      } catch (Exception e) {
+        if (snapshot != null) {
+          // restore the entityMap in case of failed transactions
+          entityMap.clear();
+          entityMap.putAll(snapshot);
+        }
+        throw e;
       } finally {
         lock.unlock();
       }
     }
 
     @Override
+    public int batchDelete(List<Pair<NameIdentifier, EntityType>> entitiesToDelete, boolean cascade)
+        throws IOException {
+      throw new UnsupportedOperationException(
+          "Batch delete is not supported in InMemoryEntityStore.");
+    }
+
+    @Override
+    public <E extends Entity & HasIdentifier> void batchPut(List<E> entities, boolean overwritten)
+        throws IOException, EntityAlreadyExistsException {
+      throw new UnsupportedOperationException("Batch put is not supported in InMemoryEntityStore.");
+    }
+
+    @Override
     public void close() throws IOException {
       entityMap.clear();
+    }
+
+    public Map<NameIdentifier, Entity> createSnapshot() {
+      return entityMap.entrySet().stream()
+          .collect(
+              Collectors.toMap(
+                  Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, Maps::newHashMap));
     }
   }
 
