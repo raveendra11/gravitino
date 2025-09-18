@@ -234,9 +234,9 @@ table.dropPartitionStatistics(statisticsToDrop);
 
 ### Server configuration
 
-| Configuration item                                  | Description                                                                                                                                                                                                                          | Default value                                                              | Required                                        | Since version |
-|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|-------------------------------------------------|---------------|
-| `gravitino.stats.partition.storageFactoryClass`     | The storage factory class for partition statistics, which is used to store partition statistics in the different storage. The `org.apache.gravitino.stats.storage.MemoryPartitionStatsStorageFactory`  can only be used for testing. | `org.apache.gravitino.stats.storage.LancePartitionStatisticStorageFactory` |  No                                             | 1.0.0         |
+| Configuration item                              | Description                                                                                                                                                                                                                          | Default value                                                              | Required  | Since version |
+|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|-----------|---------------|
+| `gravitino.stats.partition.storageFactoryClass` | The storage factory class for partition statistics, which is used to store partition statistics in the different storage. The `org.apache.gravitino.stats.storage.MemoryPartitionStatsStorageFactory`  can only be used for testing. | `org.apache.gravitino.stats.storage.LancePartitionStatisticStorageFactory` |  No       | 1.0.0         |
 
 
 If you use [Lance](https://lancedb.github.io/lance/) as the partition statistics storage, you can set the options below, if you have other lance storage options, you can pass it by adding prefix `gravitino.stats.partition.storageOption.`.
@@ -245,13 +245,18 @@ For example, if you set an extra property `foo` to `bar` for Lance storage optio
 For Lance remote storage, you can refer to the document [here](https://lancedb.github.io/lance/usage/storage/).
 
 
-| Configuration item                                        | Description                          | Default value                  | Required                                        | Since version |
-|-----------------------------------------------------------|--------------------------------------|--------------------------------|-------------------------------------------------|---------------|
-| `gravitino.stats.partition.storageOption.location`        | The location of Lance files          | `${GRAVITINO_HOME}/data/lance` | No                                              | 1.0.0         |
-| `gravitino.stats.partition.storageOption.maxRowsPerFile`  | The maximum rows per file            | `1000000`                      | No                                              | 1.0.0         |
-| `gravitino.stats.partition.storageOption.maxBytesPerFile` | The maximum bytes per file           | `104857600`                    | No                                              | 1.0.0         |
-| `gravitino.stats.partition.storageOption.maxRowsPerGroup` | The maximum rows per group           | `1000000`                      | No                                              | 1.0.0         |
-| `gravitino.stats.partition.storageOption.readBatchSize`   | The batch record number when reading | `10000`                        | No                                              | 1.0.0         |
+| Configuration item                                                   | Description                          | Default value                        | Required | Since version |
+|----------------------------------------------------------------------|--------------------------------------|--------------------------------------|----------|---------------|
+| `gravitino.stats.partition.storageOption.location`                   | The location of Lance files          | `${GRAVITINO_HOME}/data/lance`       | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.maxRowsPerFile`             | The maximum rows per file            | `1000000`                            | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.maxBytesPerFile`            | The maximum bytes per file           | `104857600`                          | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.maxRowsPerGroup`            | The maximum rows per group           | `1000000`                            | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.readBatchSize`              | The batch record number when reading | `10000`                              | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.datasetCacheSize`           | size of dataset cache for Lance      | `0`, It means we don't use the cache | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.metadataFileCacheSizeBytes` | The Lance's metadata file cache size | `102400`                             | No       | 1.0.0         |
+| `gravitino.stats.partition.storageOption.indexCacheSizeBytes`        | The Lance's index cache size         | `102400`                             | No       | 1.0.0         |
+
+If you have many tables with a small number of partitions, you should set a smaller metadataFileCacheSizeBytes and indexCacheSizeBytes.
 
 ### Implementation a custom partition storage
 
